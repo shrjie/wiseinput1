@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EchoMind | 智能語音精煉工具</title>
+  <meta name="description" content="將您的語音轉化為專業文字。AI 自動潤飾、去除贅詞、智能排版。">
+  
+  <!-- Fonts & Icons -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/lucide@latest"></script>
+  
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <div class="app-container">
+    <!-- Header -->
+    <header class="fade-in" style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 20px;">
+      <div class="drag-region" style="flex: 1; cursor: move;">
+        <h1>Echo<span class="gradient-text">Mind</span></h1>
+        <p style="color: var(--text-dim); margin-top: 4px;">AI 智能語音精煉助手</p>
+      </div>
+      <div class="glass-panel" style="padding: 4px 12px; display: flex; align-items: center; gap: 4px;">
+        <button id="settingsToggle" class="no-drag" style="background: transparent; border: none; padding: 8px; cursor: pointer; color: var(--text-dim); display: flex; align-items: center;">
+          <i data-lucide="settings" style="width: 18px;"></i>
+        </button>
+        <div style="width: 1px; height: 16px; background: var(--border-color);"></div>
+        <button id="exitApp" class="no-drag" style="background: transparent; border: none; padding: 8px; cursor: pointer; color: var(--text-dim); display: flex; align-items: center;">
+          <i data-lucide="x" style="width: 18px;"></i>
+        </button>
+      </div>
+    </header>
+
+    <!-- Settings Modal -->
+    <div id="settingsModal" class="glass-panel fade-in" style="display: none; position: absolute; top: 80px; right: 24px; left: 24px; z-index: 100; padding: 24px; border-color: var(--accent-primary);">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <h3 style="font-size: 1rem; color: var(--text-main);">API 設定</h3>
+        <i data-lucide="x" id="closeSettings" style="width: 18px; cursor: pointer; color: var(--text-dim);"></i>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 12px;">
+        <div style="display: flex; flex-direction: column; gap: 4px;">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <label style="font-size: 0.8rem; color: var(--text-dim);">OpenAI API KEY (Whisper)</label>
+            <a href="https://platform.openai.com/api-keys" target="_blank" style="color: var(--accent-primary); font-size: 0.7rem; text-decoration: none; display: flex; align-items: center; gap: 2px;">
+              申請 <i data-lucide="external-link" style="width: 10px;"></i>
+            </a>
+          </div>
+          <div style="display: flex; gap: 8px;">
+            <input type="password" id="apiKeyInput" placeholder="sk-..." style="flex: 1; background: rgba(0,0,0,0.3); border: 1px solid var(--border-color); padding: 10px; border-radius: 8px; color: white; outline: none;">
+            <button id="testWhisper" style="background: rgba(255,255,255,0.05); color: white; border: 1px solid var(--border-color); padding: 0 12px; border-radius: 8px; cursor: pointer; font-size: 0.7rem;">檢測</button>
+          </div>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 4px;">
+          <label style="font-size: 0.8rem; color: var(--text-dim);">潤色引擎</label>
+          <select id="aiProvider" style="background: rgba(0,0,0,0.3); border: 1px solid var(--border-color); padding: 10px; border-radius: 8px; color: white; outline: none; cursor: pointer;">
+            <option value="gemini">Google Gemini</option>
+            <option value="groq">Groq (Llama 3 - 極速免儲值)</option>
+          </select>
+        </div>
+        <div id="geminiSection" style="display: flex; flex-direction: column; gap: 4px;">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <label style="font-size: 0.8rem; color: var(--text-dim);">Gemini API KEY</label>
+            <a href="https://aistudio.google.com/app/apikey" target="_blank" style="color: var(--accent-primary); font-size: 0.7rem; text-decoration: none; display: flex; align-items: center; gap: 2px;">
+              申請 <i data-lucide="external-link" style="width: 10px;"></i>
+            </a>
+          </div>
+          <div style="display: flex; gap: 8px;">
+            <input type="password" id="geminiKeyInput" placeholder="AIza..." style="flex: 1; background: rgba(0,0,0,0.3); border: 1px solid var(--border-color); padding: 10px; border-radius: 8px; color: white; outline: none;">
+            <button id="testGemini" style="background: rgba(255,255,255,0.05); color: white; border: 1px solid var(--border-color); padding: 0 12px; border-radius: 8px; cursor: pointer; font-size: 0.7rem;">檢測</button>
+          </div>
+        </div>
+        <div id="groqSection" style="display: none; flex-direction: column; gap: 4px;">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <label style="font-size: 0.8rem; color: var(--text-dim);">Groq API KEY</label>
+            <a href="https://console.groq.com/keys" target="_blank" style="color: var(--accent-primary); font-size: 0.7rem; text-decoration: none; display: flex; align-items: center; gap: 2px;">
+              申請 <i data-lucide="external-link" style="width: 10px;"></i>
+            </a>
+          </div>
+          <div style="display: flex; gap: 8px;">
+            <input type="password" id="groqKeyInput" placeholder="gsk_..." style="flex: 1; background: rgba(0,0,0,0.3); border: 1px solid var(--border-color); padding: 10px; border-radius: 8px; color: white; outline: none;">
+            <button id="testGroq" style="background: rgba(255,255,255,0.05); color: white; border: 1px solid var(--border-color); padding: 0 12px; border-radius: 8px; cursor: pointer; font-size: 0.7rem;">檢測</button>
+          </div>
+        </div>
+        <p style="font-size: 0.7rem; color: var(--text-dim);">金鑰將安全儲存於您的瀏覽器中。</p>
+        <div id="settingsStatus" style="font-size: 0.8rem; text-align: center; height: 1.2rem; margin-bottom: 8px;"></div>
+        <button id="saveSettings" style="background: var(--accent-primary); color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; font-weight: 600; width: 100%;">關閉並套用</button>
+      </div>
+    </div>
+
+    <!-- Main Recording UI -->
+    <main class="record-section fade-in" style="animation-delay: 0.1s;">
+      <button id="recordBtn" class="record-btn">
+        <i data-lucide="mic" id="micIcon" style="width: 40px; height: 40px; color: white;"></i>
+      </button>
+      
+      <!-- Language Selector -->
+      <div style="margin-top: 16px; display: flex; gap: 8px;">
+        <select id="langSelect" style="background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); color: var(--text-dim); border-radius: 6px; padding: 4px 12px; font-size: 0.8rem; outline: none; cursor: pointer;">
+          <option value="zh">繁體中文</option>
+          <option value="en">English</option>
+          <option value="ja">日本語</option>
+          <option value="auto">自動偵測</option>
+        </select>
+      </div>
+      
+      <div id="statusText" style="margin-top: 24px; font-weight: 600; color: var(--text-dim);">
+        點擊開始錄音...
+      </div>
+
+      <!-- Waveform Visualizer -->
+      <div id="visualizer" class="visualizer-container">
+        <!-- Bars will be generated by JS -->
+      </div>
+    </main>
+
+    <!-- Editor Section -->
+    <section class="editor-grid fade-in" style="animation-delay: 0.2s;">
+      <!-- Raw Transcript -->
+      <div class="glass-panel editor-card">
+        <div class="card-header">
+          <span class="card-title">原始逐字稿</span>
+          <i data-lucide="file-text" style="width: 16px; color: var(--text-dim);"></i>
+        </div>
+        <div id="rawTranscript" class="content-area" contenteditable="true" placeholder="錄音後將在此顯示原始文本..."></div>
+      </div>
+
+      <!-- Refined Output -->
+      <div class="glass-panel editor-card">
+        <div class="card-header">
+          <span class="card-title">AI 精煉成品</span>
+          <div style="display: flex; gap: 12px;">
+            <i data-lucide="copy" class="action-icon" id="copyBtn" title="複製內容"></i>
+            <i data-lucide="sparkles" style="width: 16px; color: var(--accent-primary);"></i>
+          </div>
+        </div>
+        
+        <div class="template-bar">
+          <div class="template-chip active" data-template="clean">智能潤飾</div>
+          <div class="template-chip" data-template="summary">極簡摘要</div>
+          <div class="template-chip" data-template="classical">優雅文言</div>
+          <div class="template-chip" data-template="meeting">會議紀錄</div>
+        </div>
+
+        <div id="refinedText" class="content-area" style="border-top: 1px solid rgba(255,255,255,0.05); padding-top: 16px;">
+          <div style="color: var(--text-dim); font-style: italic; opacity: 0.5;">
+            等待錄音完成後進行 AI 處理...
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- History Section -->
+    <section class="glass-panel fade-in" style="animation-delay: 0.3s; padding: 12px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+        <span class="card-title" style="font-size: 0.75rem;">歷史紀錄</span>
+        <button id="clearHistory" style="background: transparent; border: none; color: var(--text-dim); font-size: 0.7rem; cursor: pointer;">清除全部</button>
+      </div>
+      <div id="historyContainer" style="max-height: 100px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px;">
+        <!-- History items will appear here -->
+        <div style="color: var(--text-dim); font-size: 0.8rem; text-align: center; opacity: 0.3; padding: 10px;">尚無紀錄</div>
+      </div>
+    </section>
+
+    <!-- Footer Stats & Hotkey -->
+    <footer class="fade-in" style="animation-delay: 0.3s; margin-top: auto; padding-top: 12px; display: flex; flex-direction: column; gap: 4px; border-top: 1px solid var(--border-color); font-size: 0.75rem; color: var(--text-dim);">
+      <div style="display: flex; justify-content: space-between;">
+        <div style="display: flex; gap: 16px;">
+          <span><strong style="color: var(--text-main);">1</strong> 錄音</span>
+          <span><strong style="color: var(--text-main);">0:12</strong> 時數</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 4px; background: rgba(255,255,255,0.05); padding: 2px 8px; border-radius: 4px;">
+          <i data-lucide="keyboard" style="width: 12px;"></i>
+          <span>ALT + SPACE</span>
+        </div>
+      </div>
+      <div style="text-align: center; padding-top: 8px;">
+        <span style="opacity: 0.6;">EchoMind Desktop Widget v1.0</span>
+        <span style="margin-left: 12px; color: var(--accent-primary); font-weight: 600; opacity: 1;">程式設計：黃世杰</span>
+      </div>
+    </footer>
+  </div>
+
+  <script src="app.js"></script>
+  <script>
+    // Initialize Lucide icons
+    lucide.createIcons();
+  </script>
+</body>
+</html>
