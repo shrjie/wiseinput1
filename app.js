@@ -47,31 +47,9 @@ class EchoMind {
 
     this.init();
     this.setupElectron();
-    this.handleWebCompatibility();
     this.loadSettings();
     this.loadHistory();
     this.requestMicPermission();
-  }
-
-  isElectron() {
-    return (typeof process !== 'undefined' && process.versions && process.versions.electron);
-  }
-
-  handleWebCompatibility() {
-    if (!this.isElectron()) {
-      // 網頁版隱藏結束按鈕及其分隔線
-      if (this.exitAppBtn) this.exitAppBtn.style.display = 'none';
-      const headerGlass = document.querySelector('header .glass-panel');
-      if (headerGlass) {
-        const divider = headerGlass.querySelector('div[style*="height: 16px"]');
-        if (divider) divider.style.display = 'none';
-        headerGlass.style.padding = '4px 8px';
-      }
-      
-      // 網頁版隱藏拖拽區域提示 (滑鼠游標改回預設)
-      const dragRegion = document.querySelector('.drag-region');
-      if (dragRegion) dragRegion.style.cursor = 'default';
-    }
   }
 
   loadHistory() {
@@ -147,7 +125,7 @@ class EchoMind {
       if (openaiKey && this.apiKeyInput) this.apiKeyInput.value = openaiKey;
       if (geminiKey && this.geminiKeyInput) this.geminiKeyInput.value = geminiKey;
       if (groqKey && this.groqKeyInput) this.groqKeyInput.value = groqKey;
-      
+
       if (this.aiProviderSelect) {
         this.aiProviderSelect.value = provider;
         if (this.geminiSection) this.geminiSection.style.display = provider === 'gemini' ? 'flex' : 'none';
@@ -174,7 +152,7 @@ class EchoMind {
 
   bindEvents() {
     this.recordBtn.addEventListener('click', () => this.toggleRecording());
-    
+
     // Settings & Testing
     if (this.settingsToggle) {
       this.settingsToggle.addEventListener('click', () => {
@@ -184,12 +162,12 @@ class EchoMind {
         }
       });
     }
-    
+
     if (this.closeSettings) this.closeSettings.addEventListener('click', () => this.settingsModal.style.display = 'none');
     if (this.testWhisperBtn) this.testWhisperBtn.addEventListener('click', () => this.testWhisperKey());
     if (this.testGeminiBtn) this.testGeminiBtn.addEventListener('click', () => this.testGeminiKey());
     if (this.testGroqBtn) this.testGroqBtn.addEventListener('click', () => this.testGroqKey());
-    
+
     // Auto-save on Input
     if (this.apiKeyInput) {
       this.apiKeyInput.addEventListener('input', () => {
@@ -222,7 +200,7 @@ class EchoMind {
         }
       });
     }
-    
+
     this.saveSettings.addEventListener('click', () => {
       this.settingsModal.style.display = 'none';
       this.showStatus("✅ 設定已更新", "var(--accent-primary)");
@@ -284,34 +262,33 @@ class EchoMind {
     const key = this.geminiKeyInput.value;
     if (!key) return this.showSettingsStatus("❌ 請輸入 Gemini Key", true);
     this.testGeminiBtn.innerText = "⏳";
-    this.showSettingsStatus("正在偵測可用模型...", false);
+    this.showSettingsStatus("正在向 Google 查詢您的可用模型清單...", false);
 
-    const models = ["gemini-1.5-flash", "gemini-1.5-flash-latest", "gemini-pro"];
-    let lastError = "";
+    try {
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${key}`);
+      const data = await response.json();
+      
+      if (data.error) {
+        this.showSettingsStatus(`❌ 金鑰錯誤: ${data.error.message}`, true);
+      } else if (data.models) {
+        const geminiModels = data.models
+          .filter(m => m.name.includes('gemini') && m.supportedGenerationMethods && m.supportedGenerationMethods.includes('generateContent'))
+          .map(m => m.name.replace('models/', ''));
 
-    for (const model of models) {
-      try {
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ contents: [{ parts: [{ text: "hi" }] }] })
-        });
-        const data = await response.json();
-        if (response.ok && !data.error) {
-          this.showSettingsStatus(`✅ Gemini 驗證成功！(使用 ${model})`, false);
+        if (geminiModels.length > 0) {
+          this.showSettingsStatus(`自動抓取可用模型: ${geminiModels.slice(0, 3).join(', ')}`, false);
+          // 將第一個支援對話的模型存起來作為預設
           localStorage.setItem('gemini_api_key', key);
-          localStorage.setItem('gemini_working_model', model); // 記錄工作的模型
-          this.testGeminiBtn.innerText = "檢測";
-          return;
+          localStorage.setItem('gemini_working_model', geminiModels[0]); 
+        } else {
+          this.showSettingsStatus(`❌ 您的金鑰找不到任何支援文字生成的 Gemini 模型`, true);
         }
-        lastError = data.error?.message || "未知錯誤";
-      } catch (e) {
-        lastError = e.message;
       }
+    } catch (e) {
+      this.showSettingsStatus(`❌ 網路錯誤: ${e.message}`, true);
+    } finally {
+      this.testGeminiBtn.innerText = "檢測";
     }
-
-    this.showSettingsStatus(`❌ Gemini 錯誤: ${lastError}`, true);
-    this.testGeminiBtn.innerText = "檢測";
   }
 
   async testGroqKey() {
@@ -322,9 +299,9 @@ class EchoMind {
     try {
       const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
         method: 'POST',
-        headers: { 
+        headers: {
           'Authorization': `Bearer ${key}`,
-          'Content-Type': 'application/json' 
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({
           model: "llama-3.1-8b-instant",
@@ -357,7 +334,7 @@ class EchoMind {
       if (!this.stream) {
         this.stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       }
-      
+
       // 1. 初始化 Whisper 錄音
       this.audioChunks = [];
       this.mediaRecorder = new MediaRecorder(this.stream);
@@ -373,7 +350,7 @@ class EchoMind {
         this.recognition.continuous = true;
         this.recognition.interimResults = true;
         this.recognition.lang = this.langSelect.value === 'auto' ? 'zh-TW' : this.langSelect.value;
-        
+
         this.recognition.onresult = (event) => {
           let final = "";
           for (let i = event.resultIndex; i < event.results.length; ++i) {
@@ -455,7 +432,7 @@ class EchoMind {
     const groqKey = localStorage.getItem('groq_api_key');
     const geminiKey = localStorage.getItem('gemini_api_key');
     const lang = this.langSelect.value;
-    
+
     if (this.audioChunks.length === 0) {
       this.showStatus("❌ 錄音失敗：無音訊數據", "#ef4444");
       return;
@@ -518,14 +495,15 @@ class EchoMind {
     // --- 階段 3：終極救災 (Gemini STT) ---
     if (geminiKey) {
       this.showStatus("⚠️ 正在使用 Gemini 備援辨識...", "#f59e0b");
-      const modelsToTry = ["gemini-1.5-flash", "gemini-1.5-flash-latest", "gemini-pro"];
+      const savedModel = localStorage.getItem('gemini_working_model');
+      const modelsToTry = savedModel ? [savedModel] : ["gemini-2.5-flash", "gemini-1.5-flash"];
       let lastError = "";
 
       for (const modelName of modelsToTry) {
         try {
           const base64Audio = await this.blobToBase64(audioBlob);
           const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${geminiKey}`;
-          
+
           const response = await fetch(url, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -538,7 +516,7 @@ class EchoMind {
               }]
             })
           });
-          
+
           const data = await response.json();
           if (data.candidates && data.candidates[0].content && data.candidates[0].content.parts[0].text) {
             const text = data.candidates[0].content.parts[0].text.trim();
@@ -569,8 +547,8 @@ class EchoMind {
     const provider = localStorage.getItem('ai_provider') || 'gemini';
     const geminiKey = localStorage.getItem('gemini_api_key');
     const groqKey = localStorage.getItem('groq_api_key');
-    const workingModel = localStorage.getItem('gemini_working_model') || "gemini-1.5-flash";
-    
+    const workingModel = localStorage.getItem('gemini_working_model') || "gemini-2.5-flash";
+
     if (!raw || raw.startsWith("聆聽中") || raw.startsWith("辨識失敗")) return;
 
     if (provider === 'gemini' && !geminiKey) {
@@ -590,7 +568,7 @@ class EchoMind {
     this.statusText.innerText = "✨ AI 正在潤色...";
 
     let promptContext = "";
-    switch(template) {
+    switch (template) {
       case 'summary': promptContext = "請將以下語音內容縮減為極簡摘要，限制在15個字以內："; break;
       case 'classical': promptContext = "請將以下現代口語轉化為優雅的文言文："; break;
       case 'meeting': promptContext = "請將以下內容整理為會議紀錄，含討論重點與決議："; break;
@@ -603,9 +581,9 @@ class EchoMind {
       if (provider === 'groq') {
         const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
           method: 'POST',
-          headers: { 
+          headers: {
             'Authorization': `Bearer ${groqKey}`,
-            'Content-Type': 'application/json' 
+            'Content-Type': 'application/json'
           },
           body: JSON.stringify({
             model: "llama-3.3-70b-versatile",
@@ -634,14 +612,13 @@ class EchoMind {
         let response = await tryFetch(workingModel);
         let data = await response.json();
 
+        // 已由設定檔自動抓取正確模型，無需硬編碼備援
         if (!response.ok || data.error) {
-          const fallbackModel = (workingModel === "gemini-pro") ? "gemini-1.5-flash" : "gemini-pro";
-          response = await tryFetch(fallbackModel);
-          data = await response.json();
+          throw new Error(data.error?.message || "Gemini 請求失敗");
         }
 
         if (data.error) throw new Error(data.error.message);
-        
+
         const refined = data.candidates[0].content.parts[0].text.trim();
         this.finalizeRefinement(refined, autoOutput);
       }
@@ -656,7 +633,7 @@ class EchoMind {
 
   finalizeRefinement(refined, autoOutput) {
     this.refinedTextArea.innerText = refined;
-    this.addToHistory(refined); 
+    this.addToHistory(refined);
     this.statusText.innerText = "✅ 處理完成並已複製";
     if (autoOutput) this.handleFinalOutput(refined);
   }
