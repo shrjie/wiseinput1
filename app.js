@@ -569,9 +569,8 @@ class EchoMind {
 
     let promptContext = "";
     switch (template) {
-      case 'summary': promptContext = "請將以下語音內容縮減為極簡摘要，限制在15個字以內："; break;
+      case 'summary': promptContext = "請將以下語音內容整理為簡單明瞭的重點摘要："; break;
       case 'classical': promptContext = "請將以下現代口語轉化為優雅的文言文："; break;
-      case 'meeting': promptContext = "請將以下內容整理為會議紀錄，含討論重點與決議："; break;
       default: promptContext = "請潤飾以下內容，去除贅字、修正語法並補上標點，保持語氣自然：";
     }
 
