@@ -267,7 +267,7 @@ class EchoMind {
     try {
       const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${key}`);
       const data = await response.json();
-      
+
       if (data.error) {
         this.showSettingsStatus(`❌ 金鑰錯誤: ${data.error.message}`, true);
       } else if (data.models) {
@@ -279,7 +279,7 @@ class EchoMind {
           this.showSettingsStatus(`自動抓取可用模型: ${geminiModels.slice(0, 3).join(', ')}`, false);
           // 將第一個支援對話的模型存起來作為預設
           localStorage.setItem('gemini_api_key', key);
-          localStorage.setItem('gemini_working_model', geminiModels[0]); 
+          localStorage.setItem('gemini_working_model', geminiModels[0]);
         } else {
           this.showSettingsStatus(`❌ 您的金鑰找不到任何支援文字生成的 Gemini 模型`, true);
         }
@@ -571,6 +571,7 @@ class EchoMind {
     switch (template) {
       case 'summary': promptContext = "請將以下語音內容整理為簡單明瞭的重點摘要："; break;
       case 'classical': promptContext = "請將以下現代口語轉化為優雅的文言文："; break;
+      case 'exaggerated': promptContext = "請將以下內容改寫成輕鬆幽默、語氣浮誇且帶有豐富情緒的表達方式，讓文字看起來更生動有趣："; break;
       default: promptContext = "請潤飾以下內容，去除贅字、修正語法並補上標點，保持語氣自然：";
     }
 
