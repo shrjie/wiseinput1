@@ -128,8 +128,6 @@ class EchoMind {
 
       if (this.aiProviderSelect) {
         this.aiProviderSelect.value = provider;
-        if (this.geminiSection) this.geminiSection.style.display = provider === 'gemini' ? 'flex' : 'none';
-        if (this.groqSection) this.groqSection.style.display = provider === 'groq' ? 'flex' : 'none';
       }
     } catch (e) {
       console.error("Error loading settings:", e);
@@ -188,8 +186,6 @@ class EchoMind {
       this.aiProviderSelect.addEventListener('change', () => {
         const provider = this.aiProviderSelect.value;
         localStorage.setItem('ai_provider', provider);
-        if (this.geminiSection) this.geminiSection.style.display = provider === 'gemini' ? 'flex' : 'none';
-        if (this.groqSection) this.groqSection.style.display = provider === 'groq' ? 'flex' : 'none';
       });
     }
 
@@ -575,7 +571,7 @@ class EchoMind {
       default: promptContext = "請潤飾以下內容，去除贅字、修正語法並補上標點，保持語氣自然：";
     }
 
-    const fullPrompt = `${promptContext}\n\n"${raw}"`;
+    const fullPrompt = `${promptContext}\n(重要限制：請直接給出唯一一種最完美的結果，直接輸出文字即可，絕對不要提供多個選項讓使用者選擇。)\n\n"${raw}"`;
 
     try {
       if (provider === 'groq') {
