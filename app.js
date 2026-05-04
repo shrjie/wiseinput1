@@ -566,9 +566,9 @@ class EchoMind {
     let promptContext = "";
     switch (template) {
       case 'summary': promptContext = "請將以下語音內容整理為簡單明瞭的重點摘要："; break;
-      case 'classical': promptContext = "請將以下現代口語轉化為優雅的文言文："; break;
-      case 'exaggerated': promptContext = "請將以下內容改寫成輕鬆幽默、語氣浮誇且帶有豐富情緒的表達方式，讓文字看起來更生動有趣："; break;
-      default: promptContext = "請潤飾以下內容，去除贅字、修正語法並補上標點，保持語氣自然：";
+      case 'humorous': promptContext = "請將以下內容改寫成幽默風趣、帶點機智與趣味的語氣，讓文字看起來更生動吸引人："; break;
+      case 'verbose': promptContext = "請將以下內容進行深度擴充與詳細解說，加入豐富的細節與有邏輯的論述，將其改寫成一篇長篇大論："; break;
+      default: promptContext = "請正常潤飾以下內容，去除贅字、修正語法並補上標點，保持語氣自然通順：";
     }
 
     const fullPrompt = `${promptContext}\n(重要限制：請直接給出唯一一種最完美的結果，直接輸出文字即可，絕對不要提供多個選項讓使用者選擇。)\n\n"${raw}"`;
